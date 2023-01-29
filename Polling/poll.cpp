@@ -5,10 +5,8 @@
 #include <time.h>
 
 int main(int argc, char **argv) {
-	//Initialize MPI - needs to be done before any other MPI command
+	//Initialize MPI
 	MPI_Init(&argc, &argv);
-	//The above but with some error handling
-	//if (MPI_Init(&argc,&argv) != MPI_SUCCESS) MPI_Abort(MPI_COMM_WORLD, 1);
 	
 	//Get num processes in MPI_COMM_WORLD
 	int world_size;
@@ -20,13 +18,13 @@ int main(int argc, char **argv) {
 	//Get the rank of this process in MPI_COMM_WORLD
 	int my_rank;
 	MPI_Comm_rank(MPI_COMM_WORLD, &my_rank);
-	//MPI_Status status;
 	
 	int len;
+	//We want a string to know the process hostname
 	char name[MPI_MAX_PROCESSOR_NAME];
 	MPI_Get_processor_name(name, &len);
-
-	unsigned int microsecond = 1000000;
+	
+	//Init random seed
 	srand(time(NULL));
 
 	//HOST CODE	
@@ -35,12 +33,16 @@ int main(int argc, char **argv) {
 		int messages_sent = 0;
 		while (messages_sent < 2) {
 			float random = (float) rand() / (float) rand();
-			std::cout << "Waiting " << random * 3 << " seconds\n";
-			usleep(random * 3 *  microsecond);
-			int message = 17;
+			std::cout << "Waiting " << random << " seconds\n";
+			usleep(random *  1000000);
+
+			int message_len = 1;
+			int message[message_len] = {17};
+			
+			//Send to its own bluefield
 			int dest = my_rank + rank_boundary;
 			MPI_Request request = MPI_REQUEST_NULL;
-			MPI_Isend(&message, 1, MPI_INT, dest, 77, MPI_COMM_WORLD, &request);
+			MPI_Isend(&message, message_len, MPI_INT, dest, 77, MPI_COMM_WORLD, &request);
 			std::cout << "Sent a message!\n";
 			messages_sent++;
 		}
@@ -55,9 +57,10 @@ int main(int argc, char **argv) {
 			int received_msg = 0;
 			//Poll for a message
                 	while (received_msg == 0) {
-				MPI_Iprobe(0, 77, MPI_COMM_WORLD, &received_msg, &status);
+				MPI_Iprobe(MPI_ANY_SOURCE, 77, MPI_COMM_WORLD, &received_msg, &status);
 			}
 			std::cout << "Found a message!\n";
+			//Get message length
 			int count;
 			MPI_Get_count( &status, MPI_INT, &count );
 			int recv_buf[count];
@@ -68,9 +71,7 @@ int main(int argc, char **argv) {
 			messages_recv++;			
 		}
 	}
-	//Print info about MPI_COMM_WORLD
-	//std::cout << "Hello World from Rank " << my_rank << " of " << world_size << "!" << "This is from: " << name << "\n";
-	//Finalize MPI - must be called after all MPI functions
+	//Finalize MPI
 	MPI_Finalize();
 
 	return 0;
