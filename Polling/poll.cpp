@@ -31,10 +31,10 @@ int main(int argc, char **argv) {
 	if (my_rank < rank_boundary) {
 		std::cout << "Hello from rank " << my_rank << "! I am host " << name << "\n";
 		int messages_sent = 0;
-		while (messages_sent < 2) {
+		while (messages_sent < 3) {
 			float random = (float) rand() / (float) rand();
-			std::cout << "Waiting " << random << " seconds\n";
-			usleep(random *  1000000);
+			std::cout << "Waiting " << random * 3 << " seconds\n";
+			usleep(random * 3 * 1000000);
 
 			int message_len = 1;
 			int message[message_len] = {17};
@@ -52,7 +52,7 @@ int main(int argc, char **argv) {
 		std::cout << "Hello from rank " << my_rank << "! I am bluefield " << name << "\n";
 		int messages_recv = 0;
 		MPI_Status status;
-		while (messages_recv < 2) {
+		while (messages_recv < 3) {
 			std::cout << "Waiting for message...\n";
 			int received_msg = 0;
 			//Poll for a message
