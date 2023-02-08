@@ -21,7 +21,7 @@ int main(int argc, char **argv) {
 	//Init random seed
 	srand(time(NULL));
 	MPI_Status status1, status11, status2, status22, status3, status33;
-	MPI_Request request0, request1, request21, request22, request31, request32;	
+	MPI_Request request0, request21, request22, request31, request32;	
 	
 	switch(my_rank) {
 		//First host to send message to its own bluefield (rank 2)
