@@ -5,9 +5,9 @@
 #include <time.h>
 #include <chrono>
 
-MPI_Request iSendBlock(int message_len, int* message_add, int dest){
-	request = MPI_REQUEST_NULL;
-	MPI_Isend(message_add, message_len, MPI_INT, dest, 77, MPI_COMM_WORLD, &request);
+MPI_Request iSendBlock(int message_len, int message[], int dest){
+	MPI_Request request = MPI_REQUEST_NULL;
+	MPI_Isend(&message, message_len, MPI_INT, dest, 77, MPI_COMM_WORLD, &request);
 	return request;
 }
 
@@ -37,8 +37,7 @@ int main(int argc, char **argv) {
 			//Send message to bfd
 			int message_len = 1;
 			int message[message_len] = {17};
-			request0 = MPI_REQUEST_NULL;
-			MPI_Isend(&message, message_len, MPI_INT, 2, 77, MPI_COMM_WORLD, &request0);
+			request0 = iSendBlock(message_len, message, 2);
 			std::cout << "Host 1 sent a message!\n";
 			MPI_Wait(&request0, MPI_STATUS_IGNORE);
 
@@ -78,8 +77,7 @@ int main(int argc, char **argv) {
 			MPI_Recv(&recv_buf, count, MPI_INT, 3, 77, MPI_COMM_WORLD, &statuses[1]);
 			std::cout << "Host 2 received a message from Bluefield 2!\n";
 
-			request01 = MPI_REQUEST_NULL;
-                        MPI_Isend(&recv_buf, count, MPI_INT, 3, 77, MPI_COMM_WORLD, &request01);
+			request01 = iSendBlock(count, recv_buf, 3);
                         //std::cout << "Host 2 sent a message back to Bluefield 2!\n";
                         MPI_Wait(&request01, MPI_STATUS_IGNORE);
 
@@ -102,8 +100,7 @@ int main(int argc, char **argv) {
 			std::cout << "Bluefield 1 received a message from Host 1!\n";
 				
 			//Pass message onto Bluefield 2 (rank 3)
-			request21 = MPI_REQUEST_NULL;
-			MPI_Isend(&recv_buf, count, MPI_INT, 3, 77, MPI_COMM_WORLD, &request21);
+			request21 = iSendBlock(count, recv_buf, 3);
 			MPI_Wait(&request21, MPI_STATUS_IGNORE);
 
 			//Receive message from Bluefield 2
@@ -120,8 +117,7 @@ int main(int argc, char **argv) {
                         std::cout << "Bluefield 1 received a message from Bluefield 2!\n";
 
 			//Pass message back to Host 1
-			request22 = MPI_REQUEST_NULL;
-                        MPI_Isend(&recv_buf2, count2, MPI_INT, 0, 78, MPI_COMM_WORLD, &request22);
+			request22 = iSendBlock(count2, recv_buf2, 0);
                         MPI_Wait(&request22, MPI_STATUS_IGNORE);
 
 			break;
@@ -143,8 +139,7 @@ int main(int argc, char **argv) {
 			std::cout << "Bluefield 2 received a message from Bluefield 1!\n";
 			
 			//Pass on message to Host 2
-			request32 = MPI_REQUEST_NULL;
-			MPI_Isend(&recv_buf, count, MPI_INT, 1, 77, MPI_COMM_WORLD, &request32);
+			request32 = iSendBlock(count, recv_buf, 1);
 			MPI_Wait(&request32, MPI_STATUS_IGNORE);
 			
 			//Poll to receive back from Host 2
@@ -161,8 +156,7 @@ int main(int argc, char **argv) {
                         std::cout << "Bluefield 2 received a message from Host 2!\n";
 
 			//Pass this message to Bfd 1
-                        request33 = MPI_REQUEST_NULL;
-                        MPI_Isend(&recv_buf2, count2, MPI_INT, 2, 77, MPI_COMM_WORLD, &request33);
+                        request33 = iSendBlock(count2, recv_buf2, 2);
                         MPI_Wait(&request33, MPI_STATUS_IGNORE);
 
 			break;
