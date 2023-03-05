@@ -6,7 +6,7 @@
 #include <chrono>
 
 MPI_Request iSendBlock(int message_len, int* message_add, int dest){
-	request = MPI_REQUEST_NULL;
+	MPI_Request request = MPI_REQUEST_NULL;
 	MPI_Isend(message_add, message_len, MPI_INT, dest, 77, MPI_COMM_WORLD, &request);
 	return request;
 }
@@ -44,13 +44,13 @@ int main(int argc, char **argv) {
 
 			//Receive message from bfd 1
 			int received_msg7;
-                        while (!received_msg7) {
-                                MPI_Iprobe(2, 78, MPI_COMM_WORLD, &received_msg7, &statuses[10]);
-                                usleep(100);
-                        }
-                        int count7;
-                        MPI_Get_count( &statuses[10], MPI_INT, &count7 );
-                        int recv_buf7[count7];
+            while (!received_msg7) {
+                    MPI_Iprobe(2, 78, MPI_COMM_WORLD, &received_msg7, &statuses[10]);
+                    usleep(100);
+            }
+            int count7;
+            MPI_Get_count( &statuses[10], MPI_INT, &count7 );
+            int recv_buf7[count7];
 
 			MPI_Recv(&recv_buf7, count7, MPI_INT, 2, 78, MPI_COMM_WORLD, &statuses[11]);
                         std::cout << "Host 1 received a message from Bluefield 1!\n";

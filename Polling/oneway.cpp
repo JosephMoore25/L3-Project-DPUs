@@ -4,6 +4,33 @@
 #include <unistd.h>
 #include <time.h>
 
+//Sends message of len message_len to dest
+MPI_Request iSendBlock(int message_len, int message[], int dest){
+	MPI_Request request = MPI_REQUEST_NULL;
+	MPI_Isend(&message, message_len, MPI_INT, dest, 77, MPI_COMM_WORLD, &request);
+	return request;
+}
+
+//Polls for message from "rank_from", and receives once found
+int Poll(int rank_from){
+	int received_msg;
+	MPI_Status probe_status;
+    while (!received_msg) {
+            MPI_Iprobe(rank_from, 77, MPI_COMM_WORLD, &received_msg, &probe_status);
+            usleep(100);
+    }
+    int count;
+    MPI_Get_count( &probe_status, MPI_INT, &count );
+	return count;
+}
+
+int * RecvBlock(int rank_from, int count){
+    int * recv_buf;
+	MPI_Status recv_status;
+	MPI_Recv(recv_buf, count, MPI_INT, rank_from, 77, MPI_COMM_WORLD, &recv_status);
+	return recv_buf;
+}
+
 int main(int argc, char **argv) {
 	MPI_Init(&argc, &argv);
 	//Get num processes in MPI_COMM_WORLD
@@ -30,74 +57,44 @@ int main(int argc, char **argv) {
 			//Send message to bfd
 			int message_len = 1;
 			int message[message_len] = {17};
-			request0 = MPI_REQUEST_NULL;
-			MPI_Isend(&message, message_len, MPI_INT, 2, 77, MPI_COMM_WORLD, &request0);
+			MPI_Request req = iSendBlock(message_len, message, 2);
 			std::cout << "Host 1 sent a message!\n";
+			MPI_Wait(&req, MPI_STATUS_IGNORE);
 			break;
-			MPI_Wait(&request0, MPI_STATUS_IGNORE);
 		}
 		case 1:
 		{
 			//Poll for message from its own bluefield (this rank can be seen as an idle rank)
-			int received_msg1;
-			while (!received_msg1) {
-                                MPI_Iprobe(3, 77, MPI_COMM_WORLD, &received_msg1, &status1);
-                        	usleep(10000);
-			}
-			//usleep(1000000);
-			int count;
-                        MPI_Get_count( &status1, MPI_INT, &count );
-                        int recv_buf[count];
-                        //request1 = MPI_REQUEST_NULL;
-			
-			MPI_Recv(&recv_buf, count, MPI_INT, 3, 77, MPI_COMM_WORLD, &status11);
+			int count = Poll(3);
+			int *recv_buf;
+			recv_buf = RecvBlock(3, count);
 			std::cout << "Host 2 received a message from Bluefield 2!\n";
 			break;
 		}	
 		case 2:
 		{
 			//Poll for message from host
-			int received_msg2;
-			while (!received_msg2) {
-                                MPI_Iprobe(0, 77, MPI_COMM_WORLD, &received_msg2, &status2);
-				usleep(10000);
-                        }
-			//usleep(1000000);
-			int count;
-                        MPI_Get_count( &status2, MPI_INT, &count );
-                        int recv_buf[count];
-                        request21 = MPI_REQUEST_NULL;
-
-			MPI_Recv(&recv_buf, count, MPI_INT, MPI_ANY_SOURCE, 77, MPI_COMM_WORLD, &status22);
+			int count = Poll(0);
+			int *recv_buf;
+			recv_buf = RecvBlock(0, count);
 			std::cout << "Bluefield 1 received a message from Host 1!\n";
-			
+				
 			//Pass message onto Bluefield 2 (rank 3)
-			request22 = MPI_REQUEST_NULL;
-			MPI_Isend(&recv_buf, count, MPI_INT, 3, 77, MPI_COMM_WORLD, &request22);
-			MPI_Wait(&request22, MPI_STATUS_IGNORE);
+			MPI_Request req = iSendBlock(count, recv_buf, 3);
+			MPI_Wait(&req, MPI_STATUS_IGNORE);
 			break;
 		}
 		case 3:
 		{
 			//Poll for message from Bluefield 1
-			int received_msg3;
-			while (!received_msg3) {
-                                MPI_Iprobe(2, 77, MPI_COMM_WORLD, &received_msg3, &status3);
-          			usleep(10000);
-			}
-			//usleep(1000000);
-			int count;
-                        MPI_Get_count( &status3, MPI_INT, &count );
-                        int recv_buf[count];
-                        request31 = MPI_REQUEST_NULL;
-
-			MPI_Recv(&recv_buf, count, MPI_INT, 2, 77, MPI_COMM_WORLD, &status33);
+			int count = Poll(2);
+			int *recv_buf;
+			recv_buf = RecvBlock(2, count);
 			std::cout << "Bluefield 2 received a message from Bluefield 1!\n";
 			
 			//Pass on message to Host 2
-			request32 = MPI_REQUEST_NULL;
-			MPI_Isend(&recv_buf, count, MPI_INT, 1, 77, MPI_COMM_WORLD, &request32);
-			MPI_Wait(&request32, MPI_STATUS_IGNORE);
+			MPI_Request req = iSendBlock(count, recv_buf, 1);
+			MPI_Wait(&req, MPI_STATUS_IGNORE);
 			break;
 		}
 	}
