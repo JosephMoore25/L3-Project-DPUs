@@ -72,7 +72,6 @@ int main(int argc, char **argv) {
 
 					//std::cout << recv_buf[0] << "\n";
 					if (recv_buf[0] != message[0] + 1) {
-						std::cout << "Test failed. Something's not quite right.\n";
 						validrun = false;
 						goto endloop;
 					}
