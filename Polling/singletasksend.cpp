@@ -2,6 +2,7 @@
 #include <iostream>
 #include <chrono>
 #include <unistd.h>
+#include <algorithm>
 
 #include "bfd_offload.h"
 
@@ -20,18 +21,25 @@ int main(int argc, char **argv) {
 	MPI_Get_processor_name(name, &len);
 	bool validrun = true;
 
-	const int message_len = 1;
-	const int repeats = 1;
+	const int tasks_bundled = 16;
+	const int message_len = 1024*tasks_bundled;
+	const int repeats = 10;
 
-    const double time_for_task = 1;
-    const int num_tasks = 20;
-    const int offload_step = 10;
+    const double time_for_task = 0.001*tasks_bundled;
+    const int num_tasks = 128/tasks_bundled;
+    const int offload_step = 16/tasks_bundled;
+	double addedtime = 0;
 
-    double toverall = 0;
 
 	//Make sure all vars are initialised
 	MPI_Barrier(MPI_COMM_WORLD);
+	if (my_rank == 0) {
+		std::cout << "No. Tasks: " << num_tasks*tasks_bundled << "   Task Size (no. ints) : " << message_len << "   Time Per Task: " \
+		<< time_for_task << "   Tasks per Enclave: " << tasks_bundled << "\n";
+	}
 	for (int offloaded_tasks=0; offloaded_tasks<=num_tasks; offloaded_tasks+=offload_step) {
+		double toverall = 0;
+		double commstime = 0;
 		for (int i=0; i<repeats; i++) {
 			switch(my_rank) {
 				//First host to send message to its own bluefield (rank 2)
@@ -233,7 +241,14 @@ int main(int argc, char **argv) {
 		}
 		if (my_rank == 0) {
 			if (validrun == true) {
-				std::cout << "Message Size: " << message_len << "   Offloaded Tasks: " << offloaded_tasks << "   Time: " << toverall/repeats << "\n";
+				//Some time to initialise + do standard code
+				if (offloaded_tasks == 0) {
+					addedtime = (toverall/repeats) - num_tasks*time_for_task;
+				}
+				//std::cout << addedtime << "\n";
+				//Calculate how long the comms took for this
+				commstime = toverall/repeats - (std::max(offloaded_tasks, num_tasks-offloaded_tasks)*time_for_task) - addedtime;
+				std::cout << "Offloaded Tasks: " << offloaded_tasks*tasks_bundled << "   Time: " << toverall/repeats << "   Comms Time: " << commstime << "\n";
 			}
 			else { break; }
 		}
