@@ -1,6 +1,5 @@
 #include <mpi.h>
 #include <iostream>
-#include <chrono>
 
 #include "bfd_offload.h"
 
@@ -45,28 +44,40 @@ int main(int argc, char **argv) {
 						message[j] = (rand() % 10000);
 					}
 
-					std::chrono::high_resolution_clock::time_point tisendstart = std::chrono::high_resolution_clock::now();
+					//std::chrono::high_resolution_clock::time_point tisendstart = std::chrono::high_resolution_clock::now();
+					double tisendstart, tisendend;
+					tisendstart = MPI_Wtime();
 					MPI_Request req = bfdoffload::iSendBlock(message_len, message, 2, 0);
-					std::chrono::high_resolution_clock::time_point tisendend = std::chrono::high_resolution_clock::now();
-					tisend += std::chrono::duration_cast<std::chrono::duration<double>>(tisendend - tisendstart).count();
+					//std::chrono::high_resolution_clock::time_point tisendend = std::chrono::high_resolution_clock::now();
+					tisendend = MPI_Wtime();
+					//tisend += std::chrono::duration_cast<std::chrono::duration<double>>(tisendend - tisendstart).count();
+					tisend += tisendend - tisendstart;
 
 					//std::cout << "Host 1 sent a message!\n";
 					MPI_Wait(&req, MPI_STATUS_IGNORE);
 
 
 					//Receive message from bfd 1, rank 2
-					std::chrono::high_resolution_clock::time_point tpollstart = std::chrono::high_resolution_clock::now();
+					//std::chrono::high_resolution_clock::time_point tpollstart = std::chrono::high_resolution_clock::now();
+					double tpollstart, tpollend;
+					tpollstart = MPI_Wtime();
 					int count = bfdoffload::Poll(2, 5);
-					std::chrono::high_resolution_clock::time_point tpollend = std::chrono::high_resolution_clock::now();
-					tpoll += std::chrono::duration_cast<std::chrono::duration<double>>(tpollend - tpollstart).count();
+					//std::chrono::high_resolution_clock::time_point tpollend = std::chrono::high_resolution_clock::now();
+					tpollend = MPI_Wtime();
+					//tpoll += std::chrono::duration_cast<std::chrono::duration<double>>(tpollend - tpollstart).count();
+					tpoll += tpollend - tpollstart;
 
-					int *recv_buf = new int[count];
+					int recv_buf[count];
 
-					std::chrono::high_resolution_clock::time_point trecvstart = std::chrono::high_resolution_clock::now();
+					//std::chrono::high_resolution_clock::time_point trecvstart = std::chrono::high_resolution_clock::now();
+					double trecvstart, trecvend;
+					trecvstart = MPI_Wtime();
 					MPI_Status recv_status;
-					MPI_Recv(recv_buf, count, MPI_INT, 2, 5, MPI_COMM_WORLD, &recv_status);
-					std::chrono::high_resolution_clock::time_point trecvend = std::chrono::high_resolution_clock::now();
-					trecv += std::chrono::duration_cast<std::chrono::duration<double>>(trecvend - trecvstart).count();
+					MPI_Recv(&recv_buf, count, MPI_INT, 2, 5, MPI_COMM_WORLD, &recv_status);
+					//std::chrono::high_resolution_clock::time_point trecvend = std::chrono::high_resolution_clock::now();
+					trecvend = MPI_Wtime();
+					//trecv += std::chrono::duration_cast<std::chrono::duration<double>>(trecvend - trecvstart).count();
+					trecv += trecvend - trecvstart;
 
 					//std::cout << "Host 1 received a message from Bluefield 1!\n";
 

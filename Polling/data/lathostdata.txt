@@ -1,0 +1,24 @@
+Message Size: 1   ISend: 1.1899e-07   Poll: 0.00128656   Recv: 1.592e-07
+Message Size: 2   ISend: 1.9551e-07   Poll: 0.00251498   Recv: 2.5675e-07
+Message Size: 4   ISend: 2.7146e-07   Poll: 0.00375031   Recv: 3.6098e-07
+Message Size: 8   ISend: 4.301e-07   Poll: 0.00498203   Recv: 4.5618e-07
+Message Size: 16   ISend: 5.1885e-07   Poll: 0.00621743   Recv: 5.559e-07
+Message Size: 32   ISend: 6.4391e-07   Poll: 0.00744774   Recv: 6.7831e-07
+Message Size: 64   ISend: 1.1767e-06   Poll: 0.00868366   Recv: 7.9709e-07
+Message Size: 128   ISend: 1.31182e-06   Poll: 0.00991372   Recv: 9.9546e-07
+Message Size: 256   ISend: 1.49007e-06   Poll: 0.0111468   Recv: 1.24875e-06
+Message Size: 512   ISend: 2.88078e-06   Poll: 0.0123263   Recv: 1.60017e-06
+Message Size: 1024   ISend: 4.81317e-06   Poll: 0.0134954   Recv: 2.12708e-06
+Message Size: 2048   ISend: 5.52541e-06   Poll: 0.014662   Recv: 2.89078e-06
+Message Size: 4096   ISend: 6.60899e-06   Poll: 0.0158259   Recv: 4.73021e-06
+Message Size: 8192   ISend: 7.91032e-06   Poll: 0.0169189   Recv: 1.38197e-05
+Message Size: 16384   ISend: 8.99196e-06   Poll: 0.0180085   Recv: 2.50248e-05
+Message Size: 32768   ISend: 1.01062e-05   Poll: 0.0190959   Recv: 3.99429e-05
+Message Size: 65536   ISend: 1.12185e-05   Poll: 0.0201893   Recv: 6.20053e-05
+Message Size: 131072   ISend: 1.31837e-05   Poll: 0.021282   Recv: 9.93156e-05
+Message Size: 262144   ISend: 1.47904e-05   Poll: 0.0224598   Recv: 0.000167266
+Message Size: 524288   ISend: 1.67825e-05   Poll: 0.023927   Recv: 0.000292629
+Message Size: 1048576   ISend: 2.03257e-05   Poll: 0.0258831   Recv: 0.000522819
+Message Size: 2097152   ISend: 2.54726e-05   Poll: 0.0287476   Recv: 0.000973883
+Message Size: 4194304   ISend: 3.78593e-05   Poll: 0.0331648   Recv: 0.00181887
+Test passed. Result valid

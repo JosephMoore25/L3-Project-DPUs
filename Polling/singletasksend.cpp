@@ -1,11 +1,12 @@
 #include <mpi.h>
 #include <iostream>
-#include <chrono>
+//#include <chrono>
 #include <unistd.h>
 #include <algorithm>
 
 #include "bfd_offload.h"
 
+//Run like so: mpirun -n 4 -H b101,b102,b103,b104 ./singletaskhost | tee ./data/testdata.txt
 
 int main(int argc, char **argv) {
 	MPI_Init(&argc, &argv);
@@ -21,21 +22,28 @@ int main(int argc, char **argv) {
 	MPI_Get_processor_name(name, &len);
 	bool validrun = true;
 
-	const int tasks_bundled = 16;
+
+	//##################CONSTANTS##############################
+	const int tasks_bundled = 1;
 	const int message_len = 1024*tasks_bundled;
 	const int repeats = 10;
 
-    const double time_for_task = 0.001*tasks_bundled;
+	const int num_cores = 16;
+	const int comm_cores = 2;
+
+    const double time_for_task = (0.001*tasks_bundled) / (num_cores - comm_cores);
     const int num_tasks = 128/tasks_bundled;
     const int offload_step = 16/tasks_bundled;
+	//########################################################
+
 	double addedtime = 0;
 
 
 	//Make sure all vars are initialised
 	MPI_Barrier(MPI_COMM_WORLD);
 	if (my_rank == 0) {
-		std::cout << "No. Tasks: " << num_tasks*tasks_bundled << "   Task Size (no. ints) : " << message_len << "   Time Per Task: " \
-		<< time_for_task << "   Tasks per Enclave: " << tasks_bundled << "\n";
+		std::cout << "No. Tasks: " << num_tasks*tasks_bundled << "   Task Size (no. ints) : " << message_len/16 << "   Time Per Task: " \
+		<< time_for_task/tasks_bundled << "   Tasks per Enclave: " << tasks_bundled << "\n";
 	}
 	for (int offloaded_tasks=0; offloaded_tasks<=num_tasks; offloaded_tasks+=offload_step) {
 		double toverall = 0;
@@ -52,7 +60,8 @@ int main(int argc, char **argv) {
 					}
 					//std::cout << "The first number is: " << message[0] << "\n";
 
-					std::chrono::high_resolution_clock::time_point tstart = std::chrono::high_resolution_clock::now();
+					//std::chrono::high_resolution_clock::time_point tstart = std::chrono::high_resolution_clock::now();
+					double tstart = MPI_Wtime();
                     
                     //Send all tasks off
                     for (int j = 0; j < offloaded_tasks; j++) {
@@ -96,8 +105,9 @@ int main(int argc, char **argv) {
 						}
 					}
 
-					std::chrono::high_resolution_clock::time_point tend = std::chrono::high_resolution_clock::now();
-					toverall += std::chrono::duration_cast<std::chrono::duration<double>>(tend - tstart).count();
+					//std::chrono::high_resolution_clock::time_point tend = std::chrono::high_resolution_clock::now();
+					double tend = MPI_Wtime();
+					toverall += tend - tstart; //std::chrono::duration_cast<std::chrono::duration<double>>(tend - tstart).count();
 					break;
 				}
 
