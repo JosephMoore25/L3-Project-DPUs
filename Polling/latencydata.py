@@ -49,7 +49,7 @@ print(alltimes)
 message_sizes = []
 
 for i in range(0, 23):
-    message_sizes.append(2**i)
+    message_sizes.append((2**i))
 
 markers = ["x", "^", "o"]
 for i in range(len(alltimes)):
@@ -60,7 +60,7 @@ for i in range(len(alltimes)):
 plt.xlabel("Message Size / B")
 plt.ylabel("Time / s")
 
-plt.legend(["4 Hosts", "4 Bluefields"])
+plt.legend(["2 Host Baseline", "4 Bluefields model", "4 Hosts model"])
 
 plt.tight_layout()
 

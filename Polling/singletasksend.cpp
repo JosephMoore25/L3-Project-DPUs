@@ -9,6 +9,7 @@
 //Run like so: mpirun -n 4 -H b101,b102,b103,b104 ./singletaskhost | tee ./data/testdata.txt
 
 int main(int argc, char **argv) {
+
 	MPI_Init(&argc, &argv);
 	//Get num processes in MPI_COMM_WORLD
 	int world_size;
@@ -24,28 +25,46 @@ int main(int argc, char **argv) {
 
 
 	//##################CONSTANTS##############################
-	const int tasks_bundled = 1;
-	const int message_len = 1024*tasks_bundled;
+	const int tasks_bundled = 64;
+
+	const int message_len = 1028*tasks_bundled;
 	const int repeats = 10;
 
-	const int num_cores = 16;
-	const int comm_cores = 2;
+	const int num_cores = 64;
+	const int comm_cores = 0;
 
-    const double time_for_task = (0.001*tasks_bundled) / (num_cores - comm_cores);
-    const int num_tasks = 128/tasks_bundled;
-    const int offload_step = 16/tasks_bundled;
+	const double cpu_time_for_task = 0.0032;
+    double time_for_task = (cpu_time_for_task*tasks_bundled) / (num_cores - comm_cores);
+	double time_with_no_offload = (cpu_time_for_task*tasks_bundled) / num_cores;
+    const int num_tasks = 512/tasks_bundled;
+    const int offload_step = num_tasks / 8;
 	//########################################################
 
+	//Can override time for task with cmd args to allow for more automated testing
+	if (argc > 1) {
+		const double new_time = atof(argv[1]);
+		time_for_task =  (new_time * tasks_bundled) / (num_cores-comm_cores);
+		time_with_no_offload = (new_time*tasks_bundled) / num_cores;
+	}
+
 	double addedtime = 0;
+
 
 
 	//Make sure all vars are initialised
 	MPI_Barrier(MPI_COMM_WORLD);
 	if (my_rank == 0) {
-		std::cout << "No. Tasks: " << num_tasks*tasks_bundled << "   Task Size (no. ints) : " << message_len/16 << "   Time Per Task: " \
-		<< time_for_task/tasks_bundled << "   Tasks per Enclave: " << tasks_bundled << "\n";
+		std::cout << "No. Tasks: " << num_tasks*tasks_bundled << "   Task Size (no. bytes) : " << message_len/tasks_bundled << "   Time Per Task: " \
+		<< (time_for_task/tasks_bundled)*(num_cores-comm_cores) << "   Tasks per Enclave: " << tasks_bundled << "\n";
 	}
+	double temp_time = time_for_task;
 	for (int offloaded_tasks=0; offloaded_tasks<=num_tasks; offloaded_tasks+=offload_step) {
+		if (offloaded_tasks == 0) {
+			time_for_task = time_with_no_offload;
+		}
+		else {
+			time_for_task = temp_time;
+		}
 		double toverall = 0;
 		double commstime = 0;
 		for (int i=0; i<repeats; i++) {
@@ -54,9 +73,9 @@ int main(int argc, char **argv) {
 				case 0:
 				{
 					//Initialise with random numbers
-					int message[message_len];
+					char message[message_len];
 					for (int j = 0; j < message_len; j++) {
-						message[j] = (rand() % 10000);
+						message[j] = ('a' + (rand() % 26));
 					}
 					//std::cout << "The first number is: " << message[0] << "\n";
 
@@ -79,7 +98,7 @@ int main(int argc, char **argv) {
 					}
                     
                     
-                    int alloffloadedtasks[offloaded_tasks][message_len];
+                    char alloffloadedtasks[offloaded_tasks][message_len];
 					//We assume each task to be the same size so constant
 					int count = 0;
 
@@ -88,10 +107,10 @@ int main(int argc, char **argv) {
                         //Receive message from bfd 1, rank 2
                         count = bfdoffload::Poll(2, 5);
 
-                        int recv_buf[message_len];
+                        char recv_buf[message_len];
 
                         MPI_Status recv_status;
-                        MPI_Recv(recv_buf, count, MPI_INT, 2, 5, MPI_COMM_WORLD, &recv_status);
+                        MPI_Recv(recv_buf, count, MPI_CHAR, 2, 5, MPI_COMM_WORLD, &recv_status);
 						std::copy(std::begin(recv_buf), std::end(recv_buf), std::begin(alloffloadedtasks[j]));
 					}
 
@@ -114,15 +133,15 @@ int main(int argc, char **argv) {
 
 				case 1:
 				{
-					int alloffloadedtasks[offloaded_tasks][message_len];
+					char alloffloadedtasks[offloaded_tasks][message_len];
 					//We assume each task to be the same size so constant
 					int count = 0;
 					//Poll for message from its own bluefield (this rank can be seen as an idle rank)
 					for (int j = 0; j < offloaded_tasks; j++) {
 						count = bfdoffload::Poll(3, 2);
-						int recv_buf[message_len];
+						char recv_buf[message_len];
 						MPI_Status recv_status;
-						MPI_Recv(&recv_buf, count, MPI_INT, 3, 2, MPI_COMM_WORLD, &recv_status);
+						MPI_Recv(&recv_buf, count, MPI_CHAR, 3, 2, MPI_COMM_WORLD, &recv_status);
 						std::copy(std::begin(recv_buf), std::end(recv_buf), std::begin(alloffloadedtasks[j]));
 					}
 
@@ -151,17 +170,17 @@ int main(int argc, char **argv) {
 
 				case 2:
 				{
-					int alloffloadedtasks[offloaded_tasks][message_len];
+					char alloffloadedtasks[offloaded_tasks][message_len];
 					//We assume each task to be the same size so constant
 					int count = 0;
 
 					//Poll for message from host
 					for (int j = 0; j < offloaded_tasks; j++) {
 						count = bfdoffload::Poll(0, 0);
-						int recv_buf[message_len];
+						char recv_buf[message_len];
 
 						MPI_Status recv_status;
-						MPI_Recv(&recv_buf, count, MPI_INT, 0, 0, MPI_COMM_WORLD, &recv_status);
+						MPI_Recv(&recv_buf, count, MPI_CHAR, 0, 0, MPI_COMM_WORLD, &recv_status);
 						std::copy(std::begin(recv_buf), std::end(recv_buf), std::begin(alloffloadedtasks[j]));
 						//std::cout << "I received: " << recv_buf[0] << "\n";
 					}
@@ -179,10 +198,10 @@ int main(int argc, char **argv) {
 					//Receive message from Bluefield 2
 					for (int j = 0; j < offloaded_tasks; j++) {
 						count = bfdoffload::Poll(3, 4);
-						int recv_buf[message_len];
+						char recv_buf[message_len];
 
 						MPI_Status recv_status2;
-						MPI_Recv(&recv_buf, count, MPI_INT, 3, 4, MPI_COMM_WORLD, &recv_status2);
+						MPI_Recv(&recv_buf, count, MPI_CHAR, 3, 4, MPI_COMM_WORLD, &recv_status2);
 						std::copy(std::begin(recv_buf), std::end(recv_buf), std::begin(alloffloadedtasks[j]));
 					}
 					//std::cout << "Now it is: " << alloffloadedtasks[0][0] << "\n";
@@ -202,17 +221,17 @@ int main(int argc, char **argv) {
 
 				case 3:
 				{
-					int alloffloadedtasks[offloaded_tasks][message_len];
+					char alloffloadedtasks[offloaded_tasks][message_len];
 					//We assume each task to be the same size so constant
 					int count = 0;
 
 					//Poll for message from Bluefield 1
 					for (int j = 0; j < offloaded_tasks; j++) {
 						count = bfdoffload::Poll(2, 1);
-						int recv_buf[message_len];
+						char recv_buf[message_len];
 
 						MPI_Status recv_status;
-						MPI_Recv(&recv_buf, count, MPI_INT, 2, 1, MPI_COMM_WORLD, &recv_status);
+						MPI_Recv(&recv_buf, count, MPI_CHAR, 2, 1, MPI_COMM_WORLD, &recv_status);
 						std::copy(std::begin(recv_buf), std::end(recv_buf), std::begin(alloffloadedtasks[j]));
 					}
 
@@ -227,10 +246,10 @@ int main(int argc, char **argv) {
 					//Poll to receive back from Host 2
 					for (int j = 0; j < offloaded_tasks; j++) {
 						count = bfdoffload::Poll(1, 3);
-						int recv_buf[message_len];
+						char recv_buf[message_len];
 
 						MPI_Status recv_status2;
-						MPI_Recv(&recv_buf, count, MPI_INT, 1, 3, MPI_COMM_WORLD, &recv_status2);
+						MPI_Recv(&recv_buf, count, MPI_CHAR, 1, 3, MPI_COMM_WORLD, &recv_status2);
 						std::copy(std::begin(recv_buf), std::end(recv_buf), std::begin(alloffloadedtasks[j]));
 					}
 

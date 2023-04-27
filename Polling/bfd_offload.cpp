@@ -2,9 +2,9 @@
 #include <unistd.h>
 
 //Sends message of len message_len to dest
-MPI_Request bfdoffload::iSendBlock(int message_len, int message[], int dest, int tag){
+MPI_Request bfdoffload::iSendBlock(int message_len, char message[], int dest, int tag){
 	MPI_Request request = MPI_REQUEST_NULL;
-	MPI_Isend(message, message_len, MPI_INT, dest, tag, MPI_COMM_WORLD, &request);
+	MPI_Isend(message, message_len, MPI_CHAR, dest, tag, MPI_COMM_WORLD, &request);
 	return request;
 }
 
@@ -14,10 +14,10 @@ int bfdoffload::Poll(int rank_from, int tag){
 	MPI_Status probe_status;
     while (received_msg == 0) {
             MPI_Iprobe(rank_from, tag, MPI_COMM_WORLD, &received_msg, &probe_status);
-            usleep(20);
+            usleep(5);
     }
     int count;
-    MPI_Get_count( &probe_status, MPI_INT, &count );
+    MPI_Get_count( &probe_status, MPI_CHAR, &count );
     //std::cout << "Found message from " << rank_from << " with tag " << tag << " and count: " << count << "\n";
 	return count;
 }

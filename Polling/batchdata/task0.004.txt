@@ -1,0 +1,11 @@
+No. Tasks: 128   Task Size (no. ints) : 1024   Time Per Task: 0.004   Tasks per Enclave: 16
+Offloaded Tasks: 0   Time: 0.0084532   Comms Time: 0
+Offloaded Tasks: 16   Time: 0.00824626   Comms Time: 0.000793053
+Offloaded Tasks: 32   Time: 0.00718727   Comms Time: 0.00073407
+Offloaded Tasks: 48   Time: 0.00678288   Comms Time: 0.00132968
+Offloaded Tasks: 64   Time: 0.00873445   Comms Time: 0.00428125
+Offloaded Tasks: 80   Time: 0.0110422   Comms Time: 0.00558902
+Offloaded Tasks: 96   Time: 0.0130192   Comms Time: 0.00656597
+Offloaded Tasks: 112   Time: 0.0152008   Comms Time: 0.00774757
+Offloaded Tasks: 128   Time: 0.0170516   Comms Time: 0.00859839
+Test passed. Result valid

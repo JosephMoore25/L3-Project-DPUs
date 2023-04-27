@@ -39,9 +39,9 @@ int main(int argc, char **argv) {
 					//std::chrono::high_resolution_clock::time_point tstart = std::chrono::high_resolution_clock::now();
 
 					//Send message to bfd, rank 2
-					int message[message_len];
+					char message[message_len];
 					for (int j = 0; j < message_len; j++) {
-						message[j] = (rand() % 10000);
+						message[j] = ('a' + (rand() % 26));
 					}
 
 					//std::chrono::high_resolution_clock::time_point tisendstart = std::chrono::high_resolution_clock::now();
@@ -67,13 +67,13 @@ int main(int argc, char **argv) {
 					//tpoll += std::chrono::duration_cast<std::chrono::duration<double>>(tpollend - tpollstart).count();
 					tpoll += tpollend - tpollstart;
 
-					int recv_buf[count];
+					char recv_buf[count];
 
 					//std::chrono::high_resolution_clock::time_point trecvstart = std::chrono::high_resolution_clock::now();
 					double trecvstart, trecvend;
 					trecvstart = MPI_Wtime();
 					MPI_Status recv_status;
-					MPI_Recv(&recv_buf, count, MPI_INT, 2, 5, MPI_COMM_WORLD, &recv_status);
+					MPI_Recv(&recv_buf, count, MPI_CHAR, 2, 5, MPI_COMM_WORLD, &recv_status);
 					//std::chrono::high_resolution_clock::time_point trecvend = std::chrono::high_resolution_clock::now();
 					trecvend = MPI_Wtime();
 					//trecv += std::chrono::duration_cast<std::chrono::duration<double>>(trecvend - trecvstart).count();
@@ -100,10 +100,10 @@ int main(int argc, char **argv) {
 
 					//Poll for message from its own bluefield (this rank can be seen as an idle rank)
 					int count = bfdoffload::Poll(3, 2);
-					int recv_buf[count];
+					char recv_buf[count];
 
 					MPI_Status recv_status;
-					MPI_Recv(&recv_buf, count, MPI_INT, 3, 2, MPI_COMM_WORLD, &recv_status);
+					MPI_Recv(&recv_buf, count, MPI_CHAR, 3, 2, MPI_COMM_WORLD, &recv_status);
 
 					//std::cout << "Host 2 received a message from Bluefield 2!\n";
 					MPI_Request req = bfdoffload::iSendBlock(count, recv_buf, 3, 3);
@@ -119,10 +119,10 @@ int main(int argc, char **argv) {
 				{
 					//Poll for message from host
 					int count = bfdoffload::Poll(0, 0);
-					int recv_buf[count];
+					char recv_buf[count];
 
 					MPI_Status recv_status;
-					MPI_Recv(&recv_buf, count, MPI_INT, 0, 0, MPI_COMM_WORLD, &recv_status);
+					MPI_Recv(&recv_buf, count, MPI_CHAR, 0, 0, MPI_COMM_WORLD, &recv_status);
 
 					//std::cout << "Bluefield 1 received a message from Host 1!\n";
 
@@ -136,10 +136,10 @@ int main(int argc, char **argv) {
 
 					//Receive message from Bluefield 2
 					int count2 = bfdoffload::Poll(3, 4);
-					int recv_buf2[count2];
+					char recv_buf2[count2];
 
 					MPI_Status recv_status2;
-					MPI_Recv(&recv_buf2, count2, MPI_INT, 3, 4, MPI_COMM_WORLD, &recv_status2);
+					MPI_Recv(&recv_buf2, count2, MPI_CHAR, 3, 4, MPI_COMM_WORLD, &recv_status2);
 
 					//std::cout << "Bluefield 1 received a message from Bluefield 2!\n";
 
@@ -157,10 +157,10 @@ int main(int argc, char **argv) {
 
 					//Poll for message from Bluefield 1
 					int count = bfdoffload::Poll(2, 1);
-					int recv_buf[count];
+					char recv_buf[count];
 
 					MPI_Status recv_status;
-					MPI_Recv(&recv_buf, count, MPI_INT, 2, 1, MPI_COMM_WORLD, &recv_status);
+					MPI_Recv(&recv_buf, count, MPI_CHAR, 2, 1, MPI_COMM_WORLD, &recv_status);
 
 					//std::cout << "Bluefield 2 received a message from Bluefield 1!\n";
 					
@@ -170,10 +170,10 @@ int main(int argc, char **argv) {
 					
 					//Poll to receive back from Host 2
 					int count2 = bfdoffload::Poll(1, 3);
-					int recv_buf2[count2];
+					char recv_buf2[count2];
 
 					MPI_Status recv_status2;
-					MPI_Recv(&recv_buf2, count2, MPI_INT, 1, 3, MPI_COMM_WORLD, &recv_status2);
+					MPI_Recv(&recv_buf2, count2, MPI_CHAR, 1, 3, MPI_COMM_WORLD, &recv_status2);
 					//std::cout << "Bluefield 2 received a message from Host 2!\n";
 
 					//Pass this message to Bfd 1

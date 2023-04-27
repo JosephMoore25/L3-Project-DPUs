@@ -1,0 +1,204 @@
+#include <mpi.h>
+#include <iostream>
+//#include <chrono>
+#include <unistd.h>
+#include <algorithm>
+
+#include "bfd_offload.h"
+
+//Run like so: mpirun -n 2 -H b101,b102 ./baselinemodel | tee ./data/testdata.txt
+
+int main(int argc, char **argv) {
+
+	MPI_Init(&argc, &argv);
+	//Get num processes in MPI_COMM_WORLD
+	int world_size;
+	MPI_Comm_size(MPI_COMM_WORLD, &world_size);
+
+	int my_rank;
+    MPI_Comm_rank(MPI_COMM_WORLD, &my_rank);
+
+	int len;
+	char name[MPI_MAX_PROCESSOR_NAME];
+	MPI_Get_processor_name(name, &len);
+	bool validrun = true;
+
+
+	//##################CONSTANTS##############################
+	const int tasks_bundled = 64;
+
+	const int message_len = 1028*tasks_bundled;
+	const int repeats = 10;
+
+	const int num_cores = 64;
+	const int comm_cores = 1;
+
+	const double cpu_time_for_task = 0.0032;
+    double time_for_task = (cpu_time_for_task*tasks_bundled) / (num_cores - comm_cores);
+	double time_with_no_offload = (cpu_time_for_task*tasks_bundled) / num_cores;
+    const int num_tasks = 512/tasks_bundled;
+    const int offload_step = num_tasks / 8;
+	//########################################################
+
+	//Can override time for task with cmd args to allow for more automated testing
+	if (argc > 1) {
+		const double new_time = atof(argv[1]);
+		time_for_task =  (new_time * tasks_bundled) / (num_cores-comm_cores);
+		time_with_no_offload = (new_time*tasks_bundled) / num_cores;
+	}
+
+	double addedtime = 0;
+
+
+
+	//Make sure all vars are initialised
+	MPI_Barrier(MPI_COMM_WORLD);
+	if (my_rank == 0) {
+		std::cout << "No. Tasks: " << num_tasks*tasks_bundled << "   Task Size (no. bytes) : " << message_len/tasks_bundled << "   Time Per Task: " \
+		<< (time_for_task/tasks_bundled)*(num_cores-comm_cores) << "   Tasks per Enclave: " << tasks_bundled << "\n";
+	}
+	double temp_time = time_for_task;
+
+	for (int offloaded_tasks=0; offloaded_tasks<=num_tasks; offloaded_tasks+=offload_step) {
+		if (offloaded_tasks == 0) {
+			time_for_task = time_with_no_offload;
+		}
+		else {
+			time_for_task = temp_time;
+		}
+		double toverall = 0;
+		double commstime = 0;
+		for (int i=0; i<repeats; i++) {
+			//std::cout << "HELLO FROM " << my_rank << "!\n";
+			switch(my_rank) {
+				//First host to send message to its own bluefield (rank 2)
+				case 0:
+				{
+					//Initialise with random numbers
+					char message[message_len];
+					for (int j = 0; j < message_len; j++) {
+						message[j] = ('a' + (rand() % 26));
+					}
+					//std::cout << "The first number is: " << message[0] << "\n";
+
+					//std::chrono::high_resolution_clock::time_point tstart = std::chrono::high_resolution_clock::now();
+					double tstart = MPI_Wtime();
+                    
+                    //Send all tasks off
+                    for (int j = 0; j < offloaded_tasks; j++) {
+                        //Send message to bfd, rank 2
+                        MPI_Request req = bfdoffload::iSendBlock(message_len, message, 1, 0);
+
+                        //std::cout << "Host 1 sent a message!\n";
+                        MPI_Wait(&req, MPI_STATUS_IGNORE);
+					}
+
+                    //Compute local tasks
+                    for (int j = 0; j < num_tasks - offloaded_tasks; j++) {
+						usleep(time_for_task * 1e6);
+						//toverall += time_for_task;
+					}
+                    
+                    
+                    char alloffloadedtasks[offloaded_tasks][message_len];
+					//We assume each task to be the same size so constant
+					int count = 0;
+
+                    //Recv all results back
+                    for (int j = 0; j < offloaded_tasks; j++) {
+                        //Receive message from bfd 1, rank 2
+                        count = bfdoffload::Poll(1, 1);
+
+                        char recv_buf[message_len];
+
+                        MPI_Status recv_status;
+                        MPI_Recv(recv_buf, count, MPI_CHAR, 1, 1, MPI_COMM_WORLD, &recv_status);
+						std::copy(std::begin(recv_buf), std::end(recv_buf), std::begin(alloffloadedtasks[j]));
+					}
+
+					//std::cout << "Host 1 received a message from Bluefield 1!\n";
+
+					if (alloffloadedtasks[0][0] != message[0] + 1) {
+						if (offloaded_tasks != 0)
+						{
+							validrun = false;
+							goto endloop;
+						}
+					}
+
+					//std::chrono::high_resolution_clock::time_point tend = std::chrono::high_resolution_clock::now();
+					double tend = MPI_Wtime();
+					toverall += tend - tstart; //std::chrono::duration_cast<std::chrono::duration<double>>(tend - tstart).count();
+					break;
+				}
+
+
+				case 1:
+				{
+					char alloffloadedtasks[offloaded_tasks][message_len];
+					//We assume each task to be the same size so constant
+					int count = 0;
+					//Poll for message from its own bluefield (this rank can be seen as an idle rank)
+					for (int j = 0; j < offloaded_tasks; j++) {
+						count = bfdoffload::Poll(0, 0);
+						char recv_buf[message_len];
+						MPI_Status recv_status;
+						MPI_Recv(&recv_buf, count, MPI_CHAR, 0, 0, MPI_COMM_WORLD, &recv_status);
+						std::copy(std::begin(recv_buf), std::end(recv_buf), std::begin(alloffloadedtasks[j]));
+					}
+
+					//Calc offloaded tasks
+                    for (int j = 0; j < offloaded_tasks; j++) {
+						usleep(time_for_task * 1e6);
+					}
+
+					//Increment recv_buf for validation
+					alloffloadedtasks[0][0]++;
+
+
+					for (int j = 0; j < offloaded_tasks; j++) {
+						MPI_Request req = bfdoffload::iSendBlock(count, alloffloadedtasks[j], 0, 1);
+						//std::cout << "Host 2 sent a message back to Bluefield 2!\n";
+						MPI_Wait(&req, MPI_STATUS_IGNORE);
+					}
+
+
+					break;
+				}	
+			}
+
+			MPI_Barrier(MPI_COMM_WORLD);
+		}
+
+
+		if (my_rank == 0) {
+			if (validrun == true) {
+				//Some time to initialise + do standard code
+				if (offloaded_tasks == 0) {
+					addedtime = (toverall/repeats) - num_tasks*time_for_task;
+				}
+				//std::cout << addedtime << "\n";
+				//Calculate how long the comms took for this
+				commstime = toverall/repeats - (std::max(offloaded_tasks, num_tasks-offloaded_tasks)*time_for_task) - addedtime;
+				std::cout << "Offloaded Tasks: " << offloaded_tasks*tasks_bundled << "   Time: " << toverall/repeats << "   Comms Time: " << commstime << "\n";
+			}
+			else { break; }
+		}
+
+		MPI_Barrier(MPI_COMM_WORLD);
+	}
+
+endloop:
+	if (my_rank == 0) {
+		if (validrun == true) {
+			std::cout << "Test passed. Result valid\n";
+		}
+		else {
+			std::cout << "Test failed. Something's not quite right.\n";	
+		}
+	}
+
+	MPI_Finalize();
+
+	return 0;
+}

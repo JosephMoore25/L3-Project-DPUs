@@ -1,0 +1,11 @@
+No. Tasks: 512   Task Size (no. bytes) : 1028   Time Per Task: 0.0256   Tasks per Enclave: 64
+Offloaded Tasks: 0   Time: 0.206079   Comms Time: 0
+Offloaded Tasks: 64   Time: 0.192731   Comms Time: 0.000305886
+Offloaded Tasks: 128   Time: 0.165525   Comms Time: 0.000406099
+Offloaded Tasks: 192   Time: 0.13836   Comms Time: 0.000548032
+Offloaded Tasks: 256   Time: 0.114424   Comms Time: 0.00391831
+Offloaded Tasks: 320   Time: 0.142838   Comms Time: 0.00502615
+Offloaded Tasks: 384   Time: 0.171365   Comms Time: 0.00624601
+Offloaded Tasks: 448   Time: 0.200063   Comms Time: 0.00763786
+Offloaded Tasks: 512   Time: 0.228958   Comms Time: 0.0092259
+Test passed. Result valid
