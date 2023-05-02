@@ -1,28 +1,17 @@
-SHELL := /bin/bash
 CXX = mpic++
 CXXFLAGS = -O3 -march=native
 ARCH:=$(shell uname -m)
+BUILDDIR = build
+COREDIR = Core-Files
+LATENCYDIR = Latency-Tests
+MINIAPPDIR = Task-Offload-Miniapp
 
-ifeq ($(ARCH),x86_64)
-	TARGET=host
-else ifeq ($(ARCH),aarch64)
-	TARGET=bfd
-endif
+$(shell mkdir -p $(BUILDDIR))
+$(shell mkdir -p $(BUILDDIR)/$(ARCH))
 
-all: $(TARGET)
-
-host: bfd_offload.cpp bfd_offload.h latency.cpp singletasksend.cpp baselinemodel.cpp baseline_latency.cpp
-
-	$(CXX) $(CXXFLAGS) -std=c++11 -o latencyhost latency.cpp bfd_offload.cpp
-	$(CXX) $(CXXFLAGS) -std=c++11 -o singletaskhost singletasksend.cpp bfd_offload.cpp
-	$(CXX) $(CXXFLAGS) -std=c++11 -o baseline baselinemodel.cpp bfd_offload.cpp
-	$(CXX) $(CXXFLAGS) -std=c++11 -o baselinelatency baseline_latency.cpp bfd_offload.cpp
-
-
-bfd: bfd_offload.cpp bfd_offload.h latency.cpp singletasksend.cpp
-
-	$(CXX) $(CXXFLAGS) -std=c++11 -o latencybfd latency.cpp bfd_offload.cpp
-	$(CXX) $(CXXFLAGS) -std=c++11 -o singletaskbfd singletasksend.cpp bfd_offload.cpp
+all:
+	(cd $(LATENCYDIR); make all)
+	(cd $(MINIAPPDIR); make all)
 
 clean:
-	rm latencyhost singletaskhost latencybfd singletaskbfd baseline baselinelatency
+	rm $(BUILDDIR) -r
