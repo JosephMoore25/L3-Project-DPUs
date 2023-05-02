@@ -11,11 +11,12 @@ plt.rc("ytick", labelsize=12)
 
 plt.gcf().set_size_inches(10, 8)
 
+#Change with varying enclave sizes.
 enclaves = [1, 4, 8, 16, 32, 64]
 markers = ["x", "^", "o", "s", "d", "p"]
 
 for i in range(0, len(enclaves)):
-    filename = "./enclavedata/bfdtask" + str(enclaves[i]) + ".txt"
+    filename = "./../data/enclavedata/bfdtask" + str(enclaves[i]) + ".txt"
     datafile = open(filename, 'r')
     Lines = datafile.readlines()
 
@@ -44,26 +45,16 @@ for i in range(0, len(enclaves)):
 
 import matplotlib.ticker as mticker
 from matplotlib.ticker import FuncFormatter
-#plt.gca().yaxis.set_minor_formatter(mticker.ScalarFormatter())
-#log_locator = LogLocator(subs='all', numticks=10, base=2)
-#plt.gca().yaxis.set_major_locator(log_locator)
+
 plt.gca().yaxis.set_major_formatter(FuncFormatter(lambda y, _: '{:.16g}'.format(y)))
 #plt.tight_layout()
-
-#filename = sys.argv[1]
-#reduced_filename = filename.split("/")[-1][:-4]
 
 #print("Num Tasks: ", num_tasks)
 #print("Task Size: " , task_size)
 #print("Time Per Task: ", time_per_task)
 #print("Tasks Per Enclave: ", tasks_per_enclave)
 
-#offloaded_tasks = np.array(offloaded_tasks)
-#time = np.array(time)
-#comms_time = np.array(comms_time)
 
-#plt.plot(offloaded_tasks, time, marker="x")
-#plt.plot(perc_tasks, time, marker="x")
 #plt.plot(perc_tasks, peak_time, marker="x")
 plt.xlabel("Percentage of tasks offloaded")
 plt.ylabel("Time / s")
@@ -73,4 +64,4 @@ plt.legend(["E = 1", "E = 4", "E = 8", "E = 16", "E = 32", "E = 64","Theoretical
 #plt.title("Offloading " + str(num_tasks) + " tasks with size " + str(task_size) + \
 #" and "  + str(time_per_task) + "s per task, " + str(tasks_per_enclave) + " tasks \
 #per enclave", wrap=True)
-plt.savefig("./plots/enclaves.png")
+plt.savefig("./../plots/enclaves.png")

@@ -12,15 +12,17 @@ plt.rc("ytick", labelsize=12)
 
 plt.gcf().set_size_inches(8, 6)
 
+#Edit this if you use different Ns
 Ns = [0.0002, 0.0004, 0.0008, 0.0012, 0.0016, 0.0024, 0.0032, 0.0048, 0.0064, 0.0128, 0.0256, 0.0512, 0.1024, 0.2048]
 def grabdata(arch):
     timept = []
     offloaded = []
     for i in range(0, len(Ns)):
         if (arch=="host"):
-            filename = "./batchdata/baseline" + str(Ns[i]) + "fourcommcores.txt"
+            #Edit this line if you change the number of comms cores
+            filename = "./../data/batchdata/baseline" + str(Ns[i]) + "fourcommcores.txt"
         else:
-            filename = "./batchdata/bfdtask" + str(Ns[i]) + ".txt"
+            filename = "./../data/batchdata/bfdtask" + str(Ns[i]) + ".txt"
         datafile = open(filename, 'r')
         Lines = datafile.readlines()
         stats = Lines[0].split()
@@ -97,4 +99,4 @@ plt.tight_layout()
 
 plt.legend(["DPUs", "Hosts"])
 
-plt.savefig("./plots/hostspeedups.png")
+plt.savefig("./../plots/hostspeedups.png")
