@@ -18,5 +18,5 @@ host: $(COREDIR)/bfd_offload.cpp $(COREDIR)/bfd_offload.h latency.cpp baseline_l
 	$(CXX) $(CXXFLAGS) -std=c++11 -o $(BUILDDIR)/latencyhost latency.cpp $(COREDIR)/bfd_offload.cpp $(LINKS)
 	$(CXX) $(CXXFLAGS) -std=c++11 -o $(BUILDDIR)/baselinelatency baseline_latency.cpp $(COREDIR)/bfd_offload.cpp $(LINKS)
 
-bfd: $(COREDIR)/bfd_offload.cpp $(COREDIR)/bfd_offload.h latency.cpp singletasksend.cpp
+bfd: $(COREDIR)/bfd_offload.cpp $(COREDIR)/bfd_offload.h latency.cpp
 	$(CXX) $(CXXFLAGS) -std=c++11 -o $(BUILDDIR)/latencybfd latency.cpp $(COREDIR)/bfd_offload.cpp $(LINKS)

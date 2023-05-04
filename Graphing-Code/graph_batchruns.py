@@ -99,4 +99,4 @@ plt.tight_layout()
 
 plt.legend(["DPUs", "Hosts"])
 
-plt.savefig("./../plots/hostspeedups.png")
+plt.savefig("./../plots/demospeedups.png")

@@ -65,4 +65,4 @@ plt.legend(["2 Host Baseline", "4 Bluefields model", "4 Hosts model"])
 plt.tight_layout()
 
 #plt.title("Latency of moving messages of size n back and forth between two worker nodes via two communication nodes pt2pt", wrap=True)
-plt.savefig("./../plots/" + reduced_filename + ".png")
+plt.savefig(reduced_filename + ".png")

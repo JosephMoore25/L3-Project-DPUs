@@ -31,9 +31,9 @@ int main(int argc, char **argv) {
 	const int repeats = 10;
 
 	const int num_cores = 64;
-	const int comm_cores = 1;
+	const int comm_cores = 16;
 
-	const double cpu_time_for_task = 0.0032;
+	const double cpu_time_for_task = 0.0128;
     double time_for_task = (cpu_time_for_task*tasks_bundled) / (num_cores - comm_cores);
 	double time_with_no_offload = (cpu_time_for_task*tasks_bundled) / num_cores;
     const int num_tasks = 512/tasks_bundled;

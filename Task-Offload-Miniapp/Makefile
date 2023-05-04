@@ -14,12 +14,12 @@ BUILDDIR = ./../build/$(ARCH)
 
 all: $(TARGET)
 
-host: $(COREDIR)/bfd_offload.cpp $(COREDIR)/bfd_offload.h singletasksend.cpp baselinemodel.cpp
+host: $(COREDIR)/bfd_offload.cpp $(COREDIR)/bfd_offload.h dpu-miniapp.cpp baselinemodel.cpp
 
-	$(CXX) $(CXXFLAGS) -std=c++11 -o $(BUILDDIR)/singletaskhost singletasksend.cpp $(COREDIR)/bfd_offload.cpp $(LINKS)
+	$(CXX) $(CXXFLAGS) -std=c++11 -o $(BUILDDIR)/dpu-miniapphost dpu-miniapp.cpp $(COREDIR)/bfd_offload.cpp $(LINKS)
 	$(CXX) $(CXXFLAGS) -std=c++11 -o $(BUILDDIR)/baseline baselinemodel.cpp $(COREDIR)/bfd_offload.cpp $(LINKS)
 
 
-bfd: $(COREDIR)/bfd_offload.cpp $(COREDIR)/bfd_offload.h singletasksend.cpp
+bfd: $(COREDIR)/bfd_offload.cpp $(COREDIR)/bfd_offload.h dpu-miniapp.cpp
 
-	$(CXX) $(CXXFLAGS) -std=c++11 -o $(BUILDDIR)/singletaskbfd singletasksend.cpp $(COREDIR)/bfd_offload.cpp $(LINKS)
+	$(CXX) $(CXXFLAGS) -std=c++11 -o $(BUILDDIR)/dpu-miniappbfd dpu-miniapp.cpp $(COREDIR)/bfd_offload.cpp $(LINKS)
